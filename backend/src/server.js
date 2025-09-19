@@ -12,7 +12,7 @@ import chatRoutes from "./routes/chat.route.js";
 import { connectDB } from "./lib/db.js";
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 const __dirname = path.resolve();
 
@@ -30,22 +30,24 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
 
-// Health check endpoint for easier Render diagnostics
+// Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "frontend/dist")));
+  const distPath = path.join(__dirname, "frontend", "dist");
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend","dist", "index.html"));
+  // Serve static files
+  app.use(express.static(distPath));
+
+  // Catch-all: serve index.html only for non-API & non-file requests
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
   });
 }
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   connectDB();
 });
-
